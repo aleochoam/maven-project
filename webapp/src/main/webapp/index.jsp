@@ -1,1 +1,1 @@
-Hello, World! Version AWS
+Hello, World! Version AWS 2.0
