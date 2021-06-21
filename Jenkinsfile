@@ -4,6 +4,16 @@ pipeline {
     tools {
         maven 'localMaven'
     }
+
+    parameters {
+        string(name: 'tomcat_prod', defaultValue: '54.237.65.218', description: 'Prod instance')
+        string(name: 'tomcat_stage', defaultValue: '54.237.63.91', description: 'stage instance')
+    }
+
+    triggers {
+        pollSCM('* * * * *')
+    }
+
     stages {
         stage('Build') {
             steps {
@@ -18,28 +28,18 @@ pipeline {
             }
         }
 
-        stage('Deploy to Staging'){
-            steps {
-                build job: 'deploy-to-staging'
-            }
-        }
-
-        stage('Deploy to production') {
-            steps {
-                timeout(time: 5, unit: 'DAYS') {
-                    input message: 'Approve PRODUCTION deployment'
+        stage('Deployments') {
+            parallel {
+                stage('Deploy to Staging'){
+                    steps {
+                        sh "scp -o StrictHostKeyChecking=no -i $HOME/ansible.pem $HOME/workspace/full-pipeline/webapp/target/*.war ubuntu@${params.tomcat_prod}:/var/lib/tomcat8/webapps"
+                    }
                 }
 
-                build job: 'deploy-to-prod'
-            }
-
-            post{
-                success {
-                    echo 'Code deployed to production'
-                }
-
-                failure {
-                    echo 'Deployment failed'
+                stage('Deploy to Prod'){
+                    steps {
+                        sh "scp -o StrictHostKeyChecking=no -i $HOME/ansible.pem $HOME/workspace/full-pipeline/webapp/target/*.war ubuntu@${params.tomcat_stage}:/var/lib/tomcat8/webapps"
+                    }
                 }
             }
         }
