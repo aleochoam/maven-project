@@ -8,6 +8,7 @@ pipeline {
     parameters {
         string(name: 'tomcat_prod', defaultValue: '54.237.65.218', description: 'Prod instance')
         string(name: 'tomcat_stage', defaultValue: '54.237.63.91', description: 'stage instance')
+        string(name: 'jboss', defaultValue: '44.193.30.40', description: 'stage instance')
     }
 
     triggers {
@@ -31,17 +32,23 @@ pipeline {
 
         stage('Deployments') {
             parallel {
-                stage('Deploy to Staging'){
+                stage('Deploy to Jboss'){
                     steps {
-                        sh "scp -o StrictHostKeyChecking=no -i $HOME/ansible.pem $HOME/workspace/full-pipeline/webapp/target/*.war ubuntu@${params.tomcat_prod}:/var/lib/tomcat8/webapps"
+                        sh "scp -o StrictHostKeyChecking=no -i $HOME/ansible.pem webapp/target/*.war ubuntu@${params.jboss}:/home/ubuntu/wildfly-24.0.0.Final/standalone/deployments"
+                    }
+                }
+
+                /* stage('Deploy to Staging'){
+                    steps {
+                        sh "scp -o StrictHostKeyChecking=no -i $HOME/ansible.pem webapp/target/*.war ubuntu@${params.tomcat_prod}:/var/lib/tomcat8/webapps"
                     }
                 }
 
                 stage('Deploy to Prod'){
                     steps {
-                        sh "scp -o StrictHostKeyChecking=no -i $HOME/ansible.pem $HOME/workspace/full-pipeline/webapp/target/*.war ubuntu@${params.tomcat_stage}:/var/lib/tomcat8/webapps"
+                        sh "scp -o StrictHostKeyChecking=no -i $HOME/ansible.pem webapp/target/*.war ubuntu@${params.tomcat_stage}:/var/lib/tomcat8/webapps"
                     }
-                }
+                } */
             }
         }
     }
